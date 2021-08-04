@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgpool-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels: 
+      app: pgpool
+  template:
+    metadata:
+      labels: 
+        app: pgpool
+    spec:          
+      securityContext:
+        fsGroup: 1001
+      containers:
+        - name: pgpool
+          image: docker.io/bitnami/pgpool:4.2.3-debian-10-r38
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            runAsUser: 1001
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: PGPOOL_BACKEND_NODES
+              value: 0:postgres-sts-0.postgres-headless-svc:5432,1:postgres-sts-1.postgres-headless-svc:5432,2:postgres-sts-2.postgres-headless-svc:5432
+            - name: PGPOOL_SR_CHECK_USER
+              value: "repmgr"
+            - name: PGPOOL_SR_CHECK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: repmgr-password
+            - name: PGPOOL_SR_CHECK_DATABASE
+              value: "postgres"
+            - name: PGPOOL_ENABLE_LDAP
+              value: "no"
+            - name: PGPOOL_POSTGRES_USERNAME
+              value: "postgres"
+            - name: PGPOOL_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secrets
+                  key: postgresql-password
+            - name: PGPOOL_ADMIN_USERNAME
+              value: "admin"
+            - name: PGPOOL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgpool-secrets
+                  key: admin-password
+            - name: PGPOOL_ENABLE_LOAD_BALANCING
+              value: "yes"
+            - name: PGPOOL_ENABLE_LOG_CONNECTIONS
+              value: "no"
+            - name: PGPOOL_ENABLE_LOG_HOSTNAME
+              value: "yes"
+            - name: PGPOOL_ENABLE_LOG_PER_NODE_STATEMENT
+              value: "no"
+            - name: PGPOOL_CHILD_LIFE_TIME
+              value: ""
+            - name: PGPOOL_ENABLE_TLS
+              value: "no"
+          ports:
+            - name: postgresql
+              containerPort: 5432
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - /opt/bitnami/scripts/pgpool/healthcheck.sh
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -ec
+                - PGPASSWORD=${PGPOOL_POSTGRES_PASSWORD} psql -U "postgres" -d "postgres" -h /opt/bitnami/pgpool/tmp -tA -c "SELECT 1" >/dev/null
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 5

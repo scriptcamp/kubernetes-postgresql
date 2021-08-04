@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: psql-client
+  name: psql-client-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: psql-client
+  template:
+    metadata:
+      labels:
+        app: psql-client
+    spec:
+      containers:
+      - image: bitnami/postgresql:11.12.0-debian-10-r13
+        name: postgresql
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"

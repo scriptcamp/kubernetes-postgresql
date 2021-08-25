@@ -1,4 +1,4 @@
 # kubernetes-postgresql
 Kubernetes Statefullset manifests for PostgreSQL
 
-Full Documentation: https://devopscube.com/deploy-postgresql-statefulset/
+For full documentation, refer https://devopscube.com/deploy-postgresql-statefulset/

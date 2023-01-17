@@ -4,7 +4,7 @@ metadata:
   name: postgres-sts
 spec:
   serviceName: postgres-headless-svc
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
       app: postgres
